@@ -1,7 +1,7 @@
 from flask_restful import Resource, reqparse
 from flask_jwt import jwt_required
 import sqlite3
-import models.item import ItemModel
+from models.item import ItemModel
 
 class Item(Resource):
     TABLE_NAME = 'items'
@@ -17,7 +17,7 @@ class Item(Resource):
     def get(self, name):
         item = ItemModel.find_by_name(name)
         if item:
-            return item
+            return item.json()
         return {'message': 'Item not found'}, 404
 
     def post(self, name):
@@ -26,21 +26,21 @@ class Item(Resource):
 
         data = Item.parser.parse_args()
 
-        item = {'name': name, 'price': data['price']}
+        item = ItemModel(name, data['price'])
 
         try:
-            ItemModel.insert(updated_item)
+            item.insert()
         except:
             return {"message": "An error occurred inserting the item."}
 
-        return item
+        return item.json(), 201
 
     @jwt_required()
     def delete(self, name):
         connection = sqlite3.connect('data.db')
         cursor = connection.cursor()
 
-        query = "DELETE FROM {table} WHERE name=?")
+        query = "DELETE FROM {table} WHERE name=?"
         cursor.execute(query, (name,))
 
         connection.commit()
@@ -53,19 +53,20 @@ class Item(Resource):
         data = Item.parser.parse_args()
 
         item = ItemModel.find_by_name(name)
-        updated_item = {'name': name, 'price': data['price']}
+        updated_item = ItemModel(name, data['price'])
+
         if item is None:
             try:
-                ItemModel.insert(updated_item)
+                updated_item.insert()
             except:
                 return {"message": "An error occurred inserting the item."}
         else:
             try:
-                ItemModel.update(updated_item)
+                updated_item.update()
             except:
                 raise
                 return {"message": "An error occurred updating the item."}
-        return updated_item
+        return updated_item.json()
 
 
 class ItemList(Resource):
