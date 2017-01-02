@@ -1,6 +1,13 @@
 import sqlite3
+from db import db
 
-class UserModel:
+class UserModel(db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80))
+    password = db.Column(db.String(80))
+
     def __init__(self, _id, username, password):
         self.id = _id
         self.username = username
@@ -37,3 +44,14 @@ class UserModel:
 
         connection.close()
         return user
+
+    @classmethod
+    def update(cls, item):
+        connection = sqlite3.connect('data.db')
+        cursor = connection.cursor()
+
+        query = "UPDATE {table} SET price=? WHERE name=?".format(table=cls.TABLE_NAME)
+        cursor.execute(query, (item['price'], item['name']))
+
+        connection.commit()
+        connection.close()
